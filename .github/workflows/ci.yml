@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      MAVEN_OPTS: -Dmaven.test.redirectTestOutputToFile=false
+      # Se seus testes usarem Testcontainers, o runner já tem Docker habilitado.
+      # Exemplo de flags úteis (descomente se precisar):
+      # TESTCONTAINERS_CHECKS_DISABLE: "true"
+      # TESTCONTAINERS_RYUK_DISABLED: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Show Java & Maven
+        run: |
+          java -version
+          mvn -v
+
+      - name: Build & Test (clean verify)
+        run: mvn -B -ntp clean verify
+
+      - name: Publicar relatórios de testes (se falhar)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: |
+            **/target/surefire-reports/**
+            **/target/failsafe-reports/**
+          if-no-files-found: ignore
