@@ -1,3 +1,6 @@
+[![CI](https://github.com/rafabrh/TeamOps/actions/workflows/ci.yml/badge.svg)](https://github.com/rafabrh/TeamOps/actions/workflows/ci.yml)
+
+
 TeamOps
 Visão Geral
 
