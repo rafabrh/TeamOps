@@ -20,10 +20,6 @@ jobs:
 
     env:
       MAVEN_OPTS: -Dmaven.test.redirectTestOutputToFile=false
-      # Se seus testes usarem Testcontainers, o runner já tem Docker habilitado.
-      # Exemplo de flags úteis (descomente se precisar):
-      # TESTCONTAINERS_CHECKS_DISABLE: "true"
-      # TESTCONTAINERS_RYUK_DISABLED: "false"
 
     steps:
       - name: Checkout
