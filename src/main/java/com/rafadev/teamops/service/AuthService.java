@@ -1,75 +1,101 @@
 package com.rafadev.teamops.service;
 
+import com.rafadev.teamops.domain.Role;
 import com.rafadev.teamops.domain.User;
+import com.rafadev.teamops.repository.RoleRepository;
 import com.rafadev.teamops.repository.UserRepository;
-import com.rafadev.teamops.security.JwtService;
-import com.rafadev.teamops.security.PasswordService;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class AuthService {
 
     private final UserRepository users;
-    private final PasswordService password;
-    private final JwtService jwt;
+    private final RoleRepository roles;
+    private final PasswordEncoder encoder;
 
-    public AuthService(UserRepository users, PasswordService password, JwtService jwt) {
+    public AuthService(UserRepository users, RoleRepository roles, PasswordEncoder encoder) {
         this.users = users;
-        this.password = password;
-        this.jwt = jwt;
+        this.roles = roles;
+        this.encoder = encoder;
     }
 
-    /** Login por email (preferência se enviado) ou login. Retorna access+refresh. */
-    public Tokens login(String email, String login, String rawPassword) {
-        User u = (!isBlank(email) ? users.findByEmail(email) : users.findByLogin(login))
-                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+    // ===== DTOs =====
+    public record Tokens(String accessToken, String refreshToken) {}
+    public record CreatedUser(String id, String code, String email, String role) {}
 
-        if (!password.matches(rawPassword, u.getPasswordHash())) {
-            throw new BadCredentialsException("Invalid credentials");
+    // ===== LOGIN (público) =====
+    @Transactional(readOnly = true)
+    public Tokens login(String tenant, String login, String password) {
+        // tenta por login; se não achar, tenta por email
+        Optional<User> opt = users.findByLogin(login);
+        if (opt.isEmpty()) {
+            opt = users.findByEmail(login.toLowerCase().trim());
+        }
+        User u = opt.orElseThrow(() -> new IllegalArgumentException("Credenciais inválidas"));
+
+        if (!encoder.matches(password, u.getPasswordHash())) {
+            throw new IllegalArgumentException("Credenciais inválidas");
         }
 
-        var roles = u.getRoles().stream().map(r -> "ROLE_" + r.getName()).toList();
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("email", safe(u.getEmail()));
-        claims.put("name", safeOr(u.getFullName(), u.getEmail()));
-        claims.put("scope", String.join(" ", roles));
-
-        String access  = jwt.generateAccessToken(u.getId().toString(), roles, claims);
-        String refresh = jwt.generateRefreshToken(u.getId().toString());
+        // TODO: substituir pelos JWTs reais (JwtService)
+        String access = "acc-" + UUID.randomUUID();
+        String refresh = "ref-" + UUID.randomUUID();
         return new Tokens(access, refresh);
     }
 
-    /** Emite novo par de tokens validando o refresh recebido. */
+    // ===== REFRESH =====
+    @Transactional(readOnly = true)
     public Tokens refresh(String refreshToken) {
-        var parsed = jwt.validateRefresh(refreshToken); // lança JwtException se inválido
-        var userId = UUID.fromString(parsed.getSubject());
-        var u = users.findById(userId).orElseThrow(() -> new BadCredentialsException("Invalid refresh"));
-        var roles = u.getRoles().stream().map(r -> "ROLE_" + r.getName()).toList();
-
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("email", safe(u.getEmail()));
-        claims.put("name", safeOr(u.getFullName(), u.getEmail()));
-        claims.put("scope", String.join(" ", roles));
-
-        String access  = jwt.generateAccessToken(u.getId().toString(), roles, claims);
-        String refresh = jwt.generateRefreshToken(u.getId().toString()); // rotação simples
+        // TODO: validar refreshToken e emitir novos tokens reais
+        String access = "acc-" + UUID.randomUUID();
+        String refresh = "ref-" + UUID.randomUUID();
         return new Tokens(access, refresh);
     }
 
-    public record Tokens(String accessToken, String refreshToken) {}
+    // ===== CADASTRO PÚBLICO: sempre COLABORADOR =====
+    @Transactional
+    public CreatedUser registerCollaborator(String name, String cpf, String email, String rawPassword, String login) {
+        String normEmail = email.trim().toLowerCase();
+        String normLogin = login.trim();
 
-    private static boolean isBlank(String s){
-        return s == null || s.trim().isEmpty(); }
+        if (users.findByEmail(normEmail).isPresent()) {
+            throw new IllegalStateException("E-mail já cadastrado: " + normEmail);
+        }
+        if (users.findByLogin(normLogin).isPresent()) {
+            throw new IllegalStateException("Login já cadastrado: " + normLogin);
+        }
+        if (users.findByCpf(cpf).isPresent()) {
+            throw new IllegalStateException("CPF já cadastrado: " + cpf);
+        }
 
-    private static String safe(String s){
-        return s == null ? "" : s; }
+        User u = new User();
+        u.setFullName(name.trim());          // sincroniza fullName/nome
+        u.setCpf(cpf);
+        u.setEmail(normEmail);
+        u.setLogin(normLogin);
+        u.setPasswordHash(encoder.encode(rawPassword));
 
-    private static String safeOr(String primary, String fallback){
-        return isBlank(primary) ? safe(fallback) : primary; }
+        // garante ROLE_COLABORADOR
+        Role colaborador = roles.findByName("ROLE_COLABORADOR").orElseGet(() -> {
+            Role r = new Role();             // sem construtor com args
+            r.setName("ROLE_COLABORADOR");
+            return roles.save(r);
+        });
+        u.getRoles().add(colaborador);
+
+        // >>> NÃO REMOVER: 'saved' é usado abaixo <<<
+        User saved = users.save(u);
+
+        return new CreatedUser(
+                saved.getId().toString(),
+                saved.getCode(),              // getter adicionado na entidade User
+                saved.getEmail(),
+                "ROLE_COLABORADOR"
+        );
+    }
 }

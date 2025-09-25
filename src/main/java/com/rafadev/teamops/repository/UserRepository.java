@@ -11,9 +11,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByEmail(String email);
 
-    boolean existsByCpf(String cpf); // usado no create
+    Optional<User> findByCode(String code);
+
+    Optional<User> findByCpf(String cpf);
+
+    boolean existsByCpf(String cpf);
+
     boolean existsByLoginAndIdNot(String login, UUID id);
+
     boolean existsByEmailAndIdNot(String email, UUID id);
+
     boolean existsByCpfAndIdNot(String cpf, UUID id);
 
 

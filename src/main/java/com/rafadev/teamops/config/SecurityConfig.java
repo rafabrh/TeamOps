@@ -60,13 +60,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/health", "/error",
-                                "/v1/auth/**",
+                                "/v1/auth/login", "/v1/auth/register", // <- LIBERADO
                                 "/actuator/**",
                                 "/v1/docs",
                                 "/swagger-ui/**",
                                 "/v1/api-docs/**", "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // Somente ADMIN cria roles elevadas
+                        .requestMatchers("/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(daoAuthenticationProvider())
