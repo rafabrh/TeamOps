@@ -90,7 +90,6 @@ public class JwtService {
                 .compact();
     }
 
-    /** Valida refresh: issuer, audience, expiração e claim typ=refresh. */
     public ParsedJwt validateRefresh(String token) {
         try {
             Jws<Claims> jws = Jwts.parserBuilder()
@@ -116,7 +115,6 @@ public class JwtService {
         }
     }
 
-    /** Wrapper simples compatível com o uso no AuthService. */
     public static class ParsedJwt {
         private final String subject;
         public ParsedJwt(String subject) { this.subject = subject; }

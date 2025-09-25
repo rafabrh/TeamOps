@@ -16,10 +16,9 @@ import java.nio.charset.StandardCharsets;
 public class JwtCryptoConfig {
 
     @Value("${security.jwt.secret}")
-    private String secret; // aceita Base64 (32 bytes) OU "raw:<min 32 chars>"
+    private String secret;
 
     private SecretKey buildHmacKey(String value) {
-        // Se vier como raw:... usa texto puro; caso contrário, tenta Base64
         byte[] keyBytes;
         if (value.startsWith("raw:")) {
             keyBytes = value.substring(4).getBytes(StandardCharsets.UTF_8);

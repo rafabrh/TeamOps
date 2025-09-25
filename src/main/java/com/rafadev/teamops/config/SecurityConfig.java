@@ -42,11 +42,6 @@ public class SecurityConfig {
         return cfg.getAuthenticationManager();
     }
 
-    /**
-     * Seu AuthService coloca perfis no claim "scope" como string com espaços
-     * e com prefixo "ROLE_..." (ex.: "ROLE_ADMIN ROLE_MANAGER").
-     * Vamos mapear esse claim para authorities do Spring.
-     */
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         var gac = new JwtGrantedAuthoritiesConverter();

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
-import com.rafadev.teamops.domain.ProjectStatus;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
