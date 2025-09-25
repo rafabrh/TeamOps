@@ -46,8 +46,11 @@ springdoc:
 
 security:
   jwt:
-    secret: "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_32+_CHARS"
-    ttl-seconds: 3600
+    secret: "${JWT_SECRET:change-me-please-to-32+chars}"
+    issuer: teamops
+    audience: teamops-api
+    access-ttl-seconds: 900
+    refresh-ttl-seconds: 604800
 
 teamops:
   admin:

@@ -1,65 +1,28 @@
 package com.rafadev.teamops.config;
 
-import com.rafadev.teamops.repository.UserRepository;
-import com.rafadev.teamops.security.JwtAuthFilter;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
 
 @Configuration
 @EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Bean
-    AuthenticationEntryPoint authenticationEntryPoint() {
-        return (req, res, ex) -> {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            res.setContentType("application/json");
-            res.getWriter().write("{\"error\":\"unauthorized\"}");
-        };
-    }
-
-    @Bean
-    AccessDeniedHandler accessDeniedHandler() {
-        return (req, res, ex) -> {
-            res.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            res.setContentType("application/json");
-            res.getWriter().write("{\"error\":\"forbidden\"}");
-        };
-    }
-
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration c = new CorsConfiguration();
-        c.setAllowedOriginPatterns(List.of("*")); // ajuste para o domínio do front na Entrega 5
-        c.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        c.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","Origin","User-Agent","Referer"));
-        c.setAllowCredentials(false);
-        c.setMaxAge(3600L);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", c);
-        return source;
-    }
-
-    @Bean
-    JwtAuthFilter jwtAuthFilter(UserRepository users, @Value("${security.jwt.secret}") String secret) {
-        return new JwtAuthFilter(users, secret);
-    }
+    private final UserDetailsService userDetailsService; // seu UserDetailsServiceImpl
 
     @Bean
     PasswordEncoder passwordEncoder() {
@@ -67,41 +30,52 @@ public class SecurityConfig {
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                            JwtAuthFilter jwtAuthFilter,
-                                            AuthenticationEntryPoint entryPoint,
-                                            AccessDeniedHandler deniedHandler) throws Exception {
+    DaoAuthenticationProvider daoAuthenticationProvider() {
+        var p = new DaoAuthenticationProvider();
+        p.setUserDetailsService(userDetailsService);
+        p.setPasswordEncoder(passwordEncoder());
+        return p;
+    }
+
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration cfg) throws Exception {
+        return cfg.getAuthenticationManager();
+    }
+
+    /**
+     * Seu AuthService coloca perfis no claim "scope" como string com espaços
+     * e com prefixo "ROLE_..." (ex.: "ROLE_ADMIN ROLE_MANAGER").
+     * Vamos mapear esse claim para authorities do Spring.
+     */
+    @Bean
+    JwtAuthenticationConverter jwtAuthenticationConverter() {
+        var gac = new JwtGrantedAuthoritiesConverter();
+        gac.setAuthoritiesClaimName("scope");  // seu claim atual
+        gac.setAuthorityPrefix("");            // já vem "ROLE_ADMIN", não precisamos prefixar
+        var converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(gac);
+        return converter;
+    }
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationConverter jwtConv) throws Exception {
         http
-                .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // públicos
                         .requestMatchers(
-                                "/health",
-                                "/error",
-                                "/auth/login",
+                                "/health", "/error",
+                                "/v1/auth/**",
                                 "/actuator/**",
-                                // springdoc custom
-                                "/v1/docs",          // página HTML do Swagger UI
-                                "/v1/swagger-ui/**", // CSS/JS/ícones do Swagger UI
-                                "/v1/api-docs/**"
-
-//                                "/swagger-ui/**",
-//                                "/swagger-ui.html",
-//                                "/v3/api-docs/**",
-//                                "/favicon.ico"
+                                "/v1/docs",
+                                "/swagger-ui/**",
+                                "/v1/api-docs/**", "/v3/api-docs/**"
                         ).permitAll()
-                        // preflight
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        // demais
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(e -> e
-                        .authenticationEntryPoint(entryPoint)
-                        .accessDeniedHandler(deniedHandler)
-                )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(daoAuthenticationProvider())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtConv)));
 
         return http.build();
     }

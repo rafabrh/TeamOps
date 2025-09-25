@@ -1,8 +1,7 @@
-package com.rafadev.teamops.web.dto.
+package com.rafadev.teamops.web;
 
 import com.rafadev.teamops.domain.Team;
 import com.rafadev.teamops.repository.UserRepository;
-import com.rafadev.teamops.web.dto.TeamController;
 import com.rafadev.teamops.repository.TeamRepository;
 import com.rafadev.teamops.web.dto.*;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;

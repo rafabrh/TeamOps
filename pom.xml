@@ -25,6 +25,11 @@
 	</properties>
 
 	<dependencies>
+		<!-- JWT / Resource Server (traz spring-security-oauth2-jose com a classe Jwt) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
 		<!-- Spring -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

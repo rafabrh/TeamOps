@@ -8,6 +8,8 @@ public record UpdateUserDto(
         @Pattern(regexp="^[0-9\\.\\-]{11,14}$", message="CPF inválido") String cpf,
         @NotBlank @Email String email,
         @NotBlank String cargo,
-        Boolean enabled,
-        @NotEmpty Set<@Pattern(regexp="ADMIN|MANAGER|COLLAB") String> roles
+        @NotBlank String login,
+        @Size(min = 6, message = "Senha deve ter ao menos 6 caracteres")
+        String password,
+        @NotEmpty Set<@Pattern(regexp="ADMIN|MANAGER|COLLABORATOR") String> roles
 ) {}

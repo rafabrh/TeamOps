@@ -1,10 +1,12 @@
 package com.rafadev.teamops.domain;
 
-import com.rafadev.teamops.domain.User;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
+import com.rafadev.teamops.domain.ProjectStatus;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 
 @Entity
 @Table(name = "projects")
@@ -24,10 +26,11 @@ public class Project {
     @Column
     private LocalDate endDatePlanned;
 
-    @Column(nullable = false, length = 32)
-    private String status; // PLANNED, IN_PROGRESS, DONE, CANCELED
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ProjectStatus status; // PLANNED, IN_PROGRESS, DONE, CANCELED
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "manager_id", foreignKey = @ForeignKey(name = "fk_project_manager"))
     private User manager;
 
@@ -69,10 +72,10 @@ public class Project {
     public void setEndDatePlanned(LocalDate endDatePlanned) {
         this.endDatePlanned = endDatePlanned; }
 
-    public String getStatus() {
+    public ProjectStatus getStatus() {
         return status; }
 
-    public void setStatus(String status) {
+    public void setStatus(ProjectStatus status) {
         this.status = status; }
 
     public User getManager() {

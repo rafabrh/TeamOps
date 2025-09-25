@@ -15,6 +15,9 @@ public class User {
     @Column(nullable = false, length = 120)
     private String nome;
 
+    @Column(nullable = false, length = 160)
+    private String fullName;
+
     @Column(nullable = false, unique = true, length = 14)
     private String cpf;
 
@@ -53,6 +56,13 @@ public class User {
     public void setNome(String nome) {
         this.nome = nome; }
 
+    public String getFullName() {
+        return this.fullName != null ? this.fullName : this.nome;
+    }
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+        this.nome = fullName;
+    }
     public String getCpf() {
         return cpf; }
 

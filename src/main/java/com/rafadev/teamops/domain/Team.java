@@ -1,7 +1,5 @@
 package com.rafadev.teamops.domain;
 
-import com.rafadev.teamops.domain.Project;
-import com.rafadev.teamops.domain.User;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.HashSet;

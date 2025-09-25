@@ -8,4 +8,14 @@ import java.util.UUID;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByLogin(String login);
+
+    Optional<User> findByEmail(String email);
+
+    boolean existsByCpf(String cpf); // usado no create
+    boolean existsByLoginAndIdNot(String login, UUID id);
+    boolean existsByEmailAndIdNot(String email, UUID id);
+    boolean existsByCpfAndIdNot(String cpf, UUID id);
+
+
 }
+

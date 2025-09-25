@@ -5,9 +5,10 @@ import java.util.Set;
 
 public record CreateUserDto(
         @NotBlank String fullName,
-        @Pattern(regexp="^[0-9\\.\\-]{11,14}$", message="CPF inválido") String cpf,
+        @Pattern(regexp = "^[0-9\\.\\-]{11,14}$", message = "CPF inválido") String cpf,
         @NotBlank @Email String email,
         @NotBlank String cargo,
-        @Size(min=6) String password,
-        @NotEmpty Set<@Pattern(regexp="ADMIN|MANAGER|COLLAB") String> roles
+        @NotBlank String login,                 // <-- adicionado
+        @Size(min = 6) String password,
+        @NotEmpty Set<@Pattern(regexp = "ADMIN|MANAGER|COLLABORATOR") String> roles // <-- corrigido
 ) {}
