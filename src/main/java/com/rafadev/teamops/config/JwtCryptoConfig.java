@@ -1,8 +1,10 @@
 package com.rafadev.teamops.config;
 
+import io.jsonwebtoken.io.Decoders;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -19,14 +21,26 @@ public class JwtCryptoConfig {
     private String secret;
 
     private SecretKey buildHmacKey(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException("JWT secret is empty. Set security.jwt.secret or JWT_SECRET env.");
+        }
         byte[] keyBytes;
-        if (value.startsWith("raw:")) {
-            keyBytes = value.substring(4).getBytes(StandardCharsets.UTF_8);
+        if (value.startsWith("base64:")) {
+            keyBytes = Decoders.BASE64.decode(value.substring("base64:".length()));
+        } else if (value.startsWith("raw:")) {
+            keyBytes = value.substring("raw:".length()).getBytes(StandardCharsets.UTF_8);
         } else {
-            keyBytes = java.util.Base64.getDecoder().decode(value);
+            // tenta Base64; se não der, usa UTF-8 cru (igual ao JwtService)
+            try {
+                keyBytes = Decoders.BASE64.decode(value);
+            } catch (Exception e) {
+                keyBytes = value.getBytes(StandardCharsets.UTF_8);
+            }
         }
         if (keyBytes.length < 32) {
-            throw new IllegalStateException("JWT secret must be at least 32 bytes");
+            throw new IllegalStateException(
+                    "JWT secret must be at least 32 bytes (256 bits). Current length: " + keyBytes.length
+            );
         }
         return new SecretKeySpec(keyBytes, "HmacSHA256");
     }
@@ -41,6 +55,7 @@ public class JwtCryptoConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         SecretKey key = buildHmacKey(secret);
-        return NimbusJwtDecoder.withSecretKey(key).build();
+        // declara HS256 explicitamente
+        return NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     }
 }

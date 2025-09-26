@@ -105,7 +105,6 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "CPF já em uso.");
         }
 
-        // campos básicos
         u.setFullName(in.fullName());
         u.setCpf(in.cpf());
         u.setEmail(in.email());
@@ -113,7 +112,6 @@ public class UserController {
         u.setLogin(in.login());
         u.setRoles(resolveRoles(in.roles()));
 
-        // senha (opcional): não aceitar vazia nem igual à atual
         if (in.password() != null) {
             var newPass = in.password().trim();
             if (newPass.isEmpty()) {
@@ -140,7 +138,6 @@ public class UserController {
         users.deleteById(id);
     }
 
-    // ---------- helpers ----------
 
     private Set<Role> resolveRoles(Set<String> names) {
         return names.stream()

@@ -8,7 +8,7 @@ public record CreateUserDto(
         @Pattern(regexp = "^[0-9\\.\\-]{11,14}$", message = "CPF inválido") String cpf,
         @NotBlank @Email String email,
         @NotBlank String cargo,
-        @NotBlank String login,                 // <-- adicionado
+        @NotBlank String login,
         @Size(min = 6) String password,
-        @NotEmpty Set<@Pattern(regexp = "ADMIN|MANAGER|COLLABORATOR") String> roles // <-- corrigido
+        @NotEmpty Set<@Pattern(regexp = "ROLE_ADMIN|ROLE_MANAGER|ROLE_COLLABORATOR") String> roles // <-- corrigido
 ) {}

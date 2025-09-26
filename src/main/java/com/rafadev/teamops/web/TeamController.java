@@ -74,7 +74,7 @@ public class TeamController {
         return toDto(t);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLAB')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLABORADOR')")
     @GetMapping("/{teamIdOrCode}")
     public TeamDto get(@PathVariable String teamIdOrCode) {
         var t = resolver.resolveTeam(teamIdOrCode);

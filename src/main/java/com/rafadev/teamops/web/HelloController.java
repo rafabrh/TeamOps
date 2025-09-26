@@ -7,9 +7,12 @@ import org.springframework.web.bind.annotation.*;
 public class HelloController {
 
     @GetMapping("/health")
-    public String health() { return "OK"; }
+    public String health() {
+        return  "OK"; }
+
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('MANAGER') or hasRole('COLLAB')")
     @GetMapping("/me")
-    public String me() { return "auth OK"; }
+    public String me() {
+        return "auth OK"; }
 }

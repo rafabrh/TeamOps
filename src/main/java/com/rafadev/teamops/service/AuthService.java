@@ -4,10 +4,12 @@ import com.rafadev.teamops.domain.Role;
 import com.rafadev.teamops.domain.User;
 import com.rafadev.teamops.repository.RoleRepository;
 import com.rafadev.teamops.repository.UserRepository;
+import com.rafadev.teamops.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,21 +19,20 @@ public class AuthService {
     private final UserRepository users;
     private final RoleRepository roles;
     private final PasswordEncoder encoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository users, RoleRepository roles, PasswordEncoder encoder) {
+    public AuthService(UserRepository users, RoleRepository roles, PasswordEncoder encoder, JwtService jwtService) {
         this.users = users;
         this.roles = roles;
         this.encoder = encoder;
+        this.jwtService = jwtService;
     }
 
-    // ===== DTOs =====
     public record Tokens(String accessToken, String refreshToken) {}
     public record CreatedUser(String id, String code, String email, String role) {}
 
-    // ===== LOGIN (público) =====
     @Transactional(readOnly = true)
     public Tokens login(String tenant, String login, String password) {
-        // tenta por login; se não achar, tenta por email
         Optional<User> opt = users.findByLogin(login);
         if (opt.isEmpty()) {
             opt = users.findByEmail(login.toLowerCase().trim());
@@ -42,22 +43,31 @@ public class AuthService {
             throw new IllegalArgumentException("Credenciais inválidas");
         }
 
-        // TODO: substituir pelos JWTs reais (JwtService)
-        String access = "acc-" + UUID.randomUUID();
-        String refresh = "ref-" + UUID.randomUUID();
+        var roleNames = u.getRoles().stream().map(Role::getName).toList(); // ROLE_*
+        var extra = Map.<String,Object>of("email", u.getEmail(), "name", u.getFullName());
+
+        String access  = jwtService.generateAccessToken(u.getId().toString(), roleNames, extra);
+        String refresh = jwtService.generateRefreshToken(u.getId().toString());
         return new Tokens(access, refresh);
     }
 
-    // ===== REFRESH =====
     @Transactional(readOnly = true)
     public Tokens refresh(String refreshToken) {
-        // TODO: validar refreshToken e emitir novos tokens reais
-        String access = "acc-" + UUID.randomUUID();
-        String refresh = "ref-" + UUID.randomUUID();
+        var parsed = jwtService.validateRefresh(refreshToken);
+        var userId = UUID.fromString(parsed.getSubject());
+        var u = users.findById(userId).orElseThrow();
+
+        var roleNames = u.getRoles().stream().map(Role::getName).toList();
+        var extra = Map.<String,Object>of(
+                "email", u.getEmail(),
+                "name",  u.getFullName()
+        );
+
+        String access  = jwtService.generateAccessToken(u.getId().toString(), roleNames, extra);
+        String refresh = jwtService.generateRefreshToken(u.getId().toString());
         return new Tokens(access, refresh);
     }
 
-    // ===== CADASTRO PÚBLICO: sempre COLABORADOR =====
     @Transactional
     public CreatedUser registerCollaborator(String name, String cpf, String email, String rawPassword, String login) {
         String normEmail = email.trim().toLowerCase();
@@ -74,26 +84,24 @@ public class AuthService {
         }
 
         User u = new User();
-        u.setFullName(name.trim());          // sincroniza fullName/nome
+        u.setFullName(name.trim());
         u.setCpf(cpf);
         u.setEmail(normEmail);
         u.setLogin(normLogin);
         u.setPasswordHash(encoder.encode(rawPassword));
 
-        // garante ROLE_COLABORADOR
         Role colaborador = roles.findByName("ROLE_COLABORADOR").orElseGet(() -> {
-            Role r = new Role();             // sem construtor com args
+            Role r = new Role();
             r.setName("ROLE_COLABORADOR");
             return roles.save(r);
         });
         u.getRoles().add(colaborador);
 
-        // >>> NÃO REMOVER: 'saved' é usado abaixo <<<
         User saved = users.save(u);
 
         return new CreatedUser(
                 saved.getId().toString(),
-                saved.getCode(),              // getter adicionado na entidade User
+                saved.getCode(),
                 saved.getEmail(),
                 "ROLE_COLABORADOR"
         );

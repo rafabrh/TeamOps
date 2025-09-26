@@ -137,7 +137,7 @@ public class ProjectController {
 
     //                    READ
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLLABORATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLABORATOR')")
     @GetMapping("/{id}")
     public ProjectDto get(@PathVariable UUID id) {
         var p = projects.findById(id)
@@ -145,7 +145,7 @@ public class ProjectController {
         return toDto(p);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLLABORATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLABORATOR')")
     @GetMapping
     public Page<ProjectDto> list(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "20") int size) {
@@ -163,7 +163,7 @@ public class ProjectController {
 
     private void ensureManagerOrAdmin(User u) {
         boolean ok = u.getRoles().stream()
-                .anyMatch(r -> "MANAGER".equals(r.getName()) || "ADMIN".equals(r.getName()));
+                .anyMatch(r -> "ROLE_MANAGER".equals(r.getName()) || "ROLE_ADMIN".equals(r.getName()));
         if (!ok) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Apenas MANAGER/ADMIN podem criar/editar projetos.");
@@ -171,7 +171,7 @@ public class ProjectController {
     }
 
     private void ensureHasRoleManager(User u) {
-        boolean ok = u.getRoles().stream().anyMatch(r -> "MANAGER".equals(r.getName()));
+        boolean ok = u.getRoles().stream().anyMatch(r -> "ROLE_MANAGER".equals(r.getName()));
         if (!ok) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Usuário indicado não possui role MANAGER.");
@@ -179,7 +179,7 @@ public class ProjectController {
     }
 
     private void ensureIsAdmin(User u) {
-        boolean ok = u.getRoles().stream().anyMatch(r -> "ADMIN".equals(r.getName()));
+        boolean ok = u.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
         if (!ok) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Apenas ADMIN pode trocar o gerente do projeto.");

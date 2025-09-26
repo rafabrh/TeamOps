@@ -11,5 +11,5 @@ public record UpdateUserDto(
         @NotBlank String login,
         @Size(min = 6, message = "Senha deve ter ao menos 6 caracteres")
         String password,
-        @NotEmpty Set<@Pattern(regexp="ADMIN|MANAGER|COLLABORATOR") String> roles
+        @NotEmpty Set<@Pattern(regexp="ROLE_ADMIN|ROLE_MANAGER|ROLE_COLABORADOR") String> roles
 ) {}
