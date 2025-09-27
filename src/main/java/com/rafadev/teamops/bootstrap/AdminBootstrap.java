@@ -39,15 +39,12 @@ public class AdminBootstrap implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // garante que as roles existem
         Role rAdmin        = ensureRole("ROLE_ADMIN");
         Role rManager      = ensureRole("ROLE_MANAGER");
         Role rColaborador  = ensureRole("ROLE_COLABORADOR");
 
-        // garante admin
         users.findByLogin(adminLogin).ifPresentOrElse(
                 u -> {
-                    // garante que o admin tenha ROLE_ADMIN
                     if (u.getRoles().stream().noneMatch(r -> "ROLE_ADMIN".equals(r.getName()))) {
                         u.getRoles().add(rAdmin);
                         users.save(u);

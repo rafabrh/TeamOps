@@ -22,12 +22,10 @@ public class UserPrincipal implements UserDetails {
     }
 
     private Set<GrantedAuthority> mapAuthorities(Set<Role> roles) {
-        // ajuste este mapeamento conforme o seu Role (name/authority/etc.)
         return roles.stream()
                 .map(role -> {
                     String name = role.getName(); // supondo getName()
                     if (name == null || name.isBlank()) return null;
-                    // garanta prefixo ROLE_ (Spring usa esse padrão para hasRole)
                     String granted = name.startsWith("ROLE_") ? name : "ROLE_" + name;
                     return new SimpleGrantedAuthority(granted);
                 })
