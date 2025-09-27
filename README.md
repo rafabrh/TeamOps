@@ -9,7 +9,7 @@ O sistema oferece um conjunto robusto de funcionalidades para o **ciclo de vida 
 
 ---
 
-## 🚀 Funcionalidades
+##  Funcionalidades
 
 ### Gestão de Projetos
 - Criação, edição, arquivamento e exclusão de projetos.  
@@ -53,7 +53,7 @@ O sistema oferece um conjunto robusto de funcionalidades para o **ciclo de vida 
 - Migrations com **Flyway**.  
 
 
-## 🏗️ Arquitetura
+##  Arquitetura
 
 ```text
                +------------------------+
@@ -87,7 +87,7 @@ O sistema oferece um conjunto robusto de funcionalidades para o **ciclo de vida 
                |     (Dockerized DB)    |
                +------------------------+
 
-🛠️ Tecnologias
+ Tecnologias
 
 Backend: Java 21, Spring Boot 3, Spring Data JPA, Spring Security, MapStruct, Flyway
 
@@ -103,7 +103,7 @@ Mensageria (opcional): Apache Kafka
 
 Infraestrutura: Docker, Docker Compose
 
-▶️ Como Executar
+ Como Executar
 Pré-requisitos
 
 Java 21
@@ -121,6 +121,19 @@ docker compose up -d
 
 Executar a aplicação:
 
-mvn clean spring-boot:run
+# Gera 32 bytes aleatórios de forma compatível
+$bytes = New-Object 'System.Byte[]' 32
+$rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::Create()
+$rng.GetBytes($bytes)
+$rng.Dispose()
 
-mvn clean spring-boot:run
+# Converte pra Base64 e exporta na sessão atual
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+
+# (Opcional) visualizar
+Write-Host "JWT_SECRET = $env:JWT_SECRET"
+
+# Sobe a aplicação
+mvn spring-boot:run
+
+
