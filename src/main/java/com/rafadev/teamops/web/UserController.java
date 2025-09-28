@@ -38,7 +38,7 @@ public class UserController {
 
     // ---------- READ ----------
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
     public Page<UserDto> list(@RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "20") int size) {
@@ -46,7 +46,7 @@ public class UserController {
         return users.findAll(p).map(this::toDto);
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping("/{id}")
     public UserDto get(@PathVariable UUID id) {
         var u = users.findById(id)
@@ -56,7 +56,7 @@ public class UserController {
 
     // ---------- CREATE ----------
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
     @Transactional
     public UserDto create(@Valid @RequestBody CreateUserDto in) {
@@ -87,7 +87,7 @@ public class UserController {
 
     // ---------- UPDATE ----------
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/{id}")
     @Transactional
     public UserDto update(@PathVariable UUID id, @Valid @RequestBody UpdateUserDto in) {
@@ -129,7 +129,7 @@ public class UserController {
 
     // ---------- DELETE ----------
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
         if (!users.existsById(id)) {

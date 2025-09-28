@@ -53,6 +53,8 @@ security:
     refresh-ttl-seconds: 604800
 
 teamops:
+  bootstrap:
+    enabled: false
   admin:
     login: admin
     password: admin123

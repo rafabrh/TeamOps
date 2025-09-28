@@ -6,11 +6,14 @@ import com.rafadev.teamops.repository.RoleRepository;
 import com.rafadev.teamops.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
 import java.util.Set;
 
 @Component
+@ConditionalOnProperty(value = "teamops.bootstrap.enabled", havingValue = "true", matchIfMissing = false)
 public class AdminBootstrap implements CommandLineRunner {
 
     private final UserRepository users;
@@ -23,7 +26,10 @@ public class AdminBootstrap implements CommandLineRunner {
         this.encoder = encoder;
     }
 
-    @Value("${teamops.admin.login:admin}")
+    @Value("${teamops.admin.email:admin@teamops.local}")
+    private String adminEmail;
+
+    @Value("${teamops.admin.login:admin@teamops.local}")
     private String adminLogin;
 
     @Value("${teamops.admin.password:admin}")
@@ -39,13 +45,15 @@ public class AdminBootstrap implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        Role rAdmin        = ensureRole("ROLE_ADMIN");
-        Role rManager      = ensureRole("ROLE_MANAGER");
-        Role rColaborador  = ensureRole("ROLE_COLABORADOR");
+        // Alinhar com o seed SQL: ADMIN, MANAGER, COLLAB
+        Role rAdmin   = ensureRole("ADMIN");
+        ensureRole("MANAGER");
+        ensureRole("COLLAB");
 
-        users.findByLogin(adminLogin).ifPresentOrElse(
+        // Idempotente por e-mail (evita conflito com Flyway seed)
+        users.findByEmail(adminEmail).ifPresentOrElse(
                 u -> {
-                    if (u.getRoles().stream().noneMatch(r -> "ROLE_ADMIN".equals(r.getName()))) {
+                    if (u.getRoles().stream().noneMatch(r -> "ADMIN".equals(r.getName()))) {
                         u.getRoles().add(rAdmin);
                         users.save(u);
                     }
@@ -54,14 +62,13 @@ public class AdminBootstrap implements CommandLineRunner {
                     User u = new User();
                     u.setFullName("Administrador");
                     u.setCpf("000.000.000-00");
-                    u.setEmail("admin@teamops.local");
-                    u.setCargo("ROLE_ADMIN");
+                    u.setEmail(adminEmail);
+                    u.setCargo("administrador");
                     u.setLogin(adminLogin);
                     u.setPasswordHash(encoder.encode(adminPassword));
-                    u.setRoles(Set.of(rAdmin)); // só ROLE_ADMIN no seed
+                    u.setRoles(Set.of(rAdmin)); // só ADMIN no seed
                     users.save(u);
                 }
         );
     }
 }
-

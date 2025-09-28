@@ -1,20 +1,20 @@
-version: "3.9"
 services:
   postgres:
     image: postgres:16
     container_name: teamops-postgres
-    ports:
-      - "5433:5432"
     environment:
-      POSTGRES_DB: teamops
       POSTGRES_USER: teamops
       POSTGRES_PASSWORD: teamops
+      POSTGRES_DB: teamops_db
+    ports:
+      - "5433:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pgdata_teamops:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U teamops -d teamops"]
+      test: ["CMD-SHELL", "pg_isready -U teamops -d teamops_db"]
       interval: 5s
-      timeout: 5s
-      retries: 20
+      timeout: 3s
+      retries: 10
+
 volumes:
-  pg_data:
+  pgdata_teamops:

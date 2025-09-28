@@ -1,10 +1,22 @@
 spring:
   datasource:
-    url: jdbc:tc:postgresql:16:///teamops?TC_DAEMON=true
-    username: test
-    password: test
-  flyway:
-    enabled: true
+    url: jdbc:postgresql://localhost:5433/teamops_test
+    username: teamops
+    password: teamops
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
+  flyway:
+    enabled: true
+
+security:
+  jwt:
+    secret: "raw:THIS_is_a_very_long_and_safe_TEST_secret_key_1234567890"
+    issuer: "teamops"
+    audience: "teamops-api"
+    access-ttl-seconds: 900
+    refresh-ttl-seconds: 604800
+
+teamops:
+  bootstrap:
+    enabled: true

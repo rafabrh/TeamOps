@@ -1,5 +1,4 @@
 -- V2_1__users_patch_columns.sql
--- Garante colunas usadas no V3__seed_users.sql já existam antes dos INSERTs.
 
 -- full_name
 ALTER TABLE users

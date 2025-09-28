@@ -10,5 +10,5 @@ public record CreateUserDto(
         @NotBlank String cargo,
         @NotBlank String login,
         @Size(min = 6) String password,
-        @NotEmpty Set<@Pattern(regexp = "ROLE_ADMIN|ROLE_MANAGER|ROLE_COLLABORATOR") String> roles // <-- corrigido
+        @NotEmpty Set<@Pattern(regexp = "ADMIN|MANAGER|COLABORADOR") String> roles
 ) {}

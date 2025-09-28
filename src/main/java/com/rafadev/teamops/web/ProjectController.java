@@ -38,7 +38,7 @@ public class ProjectController {
     }
 
     //                    CREATE
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLABORADOR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLABORADOR')")
     @PostMapping
     @Transactional
     public ProjectDto create(@Valid @RequestBody ProjectIn in,
@@ -81,7 +81,7 @@ public class ProjectController {
     }
 
     //                      UPDATE
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PutMapping("/{id}")
     @Transactional
     public ProjectDto update(@PathVariable UUID id,
@@ -137,7 +137,7 @@ public class ProjectController {
 
     //                    READ
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLABORADOR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLABORADOR')")
     @GetMapping("/{id}")
     public ProjectDto get(@PathVariable UUID id) {
         var p = projects.findById(id)
@@ -145,7 +145,7 @@ public class ProjectController {
         return toDto(p);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @GetMapping
     public Page<ProjectDto> list(@RequestParam(defaultValue = "0") int page,
                                  @RequestParam(defaultValue = "20") int size) {

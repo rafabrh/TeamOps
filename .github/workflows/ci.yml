@@ -14,38 +14,34 @@ concurrency:
 jobs:
   build-test:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: teamops
+          POSTGRES_PASSWORD: teamops
+          POSTGRES_DB: teamops_test
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd="pg_isready -U teamops -d teamops_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     env:
+      SPRING_PROFILES_ACTIVE: test
+      SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5433/teamops_test
+      SPRING_DATASOURCE_USERNAME: teamops
+      SPRING_DATASOURCE_PASSWORD: teamops
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SECURITY_JWT_SECRET: raw:THIS_is_a_very_long_and_safe_TEST_secret_key_1234567890
       MAVEN_OPTS: -Dmaven.test.redirectTestOutputToFile=false
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup JDK 21 (Temurin)
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
-
-      - name: Show Java & Maven
-        run: |
-          java -version
-          mvn -v
-
-      - name: Build & Test (clean verify)
+      - name: Build & Test
         run: mvn -B -ntp clean verify
 
-      - name: Publicar relatórios de testes (se falhar)
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: surefire-reports
-          path: |
-            **/target/surefire-reports/**
-            **/target/failsafe-reports/**
-          if-no-files-found: ignore

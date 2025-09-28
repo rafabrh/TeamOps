@@ -44,7 +44,7 @@ public class TeamController {
         this.resolver = resolver;
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping
     @Transactional
     public TeamDto create(@Valid @RequestBody TeamIn in) {
@@ -61,7 +61,7 @@ public class TeamController {
         return toDto(t);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PutMapping("/{teamIdOrCode}")
     @Transactional
     public TeamDto update(@PathVariable String teamIdOrCode, @Valid @RequestBody TeamIn in) {
@@ -77,14 +77,14 @@ public class TeamController {
         return toDto(t);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER','COLABORADOR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLABORADOR')")
     @GetMapping("/{teamIdOrCode}")
     public TeamDto get(@PathVariable String teamIdOrCode) {
         var t = resolver.resolveTeam(teamIdOrCode);
         return toDto(t);
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping("/{teamIdOrCode}/members")
     @Transactional
     public ResponseEntity<Void> addMembers(@PathVariable String teamIdOrCode,
@@ -121,7 +121,7 @@ public class TeamController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @DeleteMapping("/{teamIdOrCode}/members/{login}")
     @Transactional
     public ResponseEntity<Void> removeMember(@PathVariable String teamIdOrCode,
@@ -137,7 +137,7 @@ public class TeamController {
         return ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER')")
     @PostMapping("/{teamIdOrCode}/projects")
     @Transactional
     public ResponseEntity<Void> linkProjects(@PathVariable String teamIdOrCode,
@@ -149,7 +149,7 @@ public class TeamController {
         return ResponseEntity.ok().build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     @GetMapping
     public Page<TeamDto> list(@RequestParam(defaultValue = "0") int page,
                               @RequestParam(defaultValue = "20") int size) {
