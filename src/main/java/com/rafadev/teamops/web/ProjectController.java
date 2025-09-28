@@ -16,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -38,10 +39,11 @@ public class ProjectController {
     }
 
     //                    CREATE
-    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLABORADOR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLLAB')")
     @PostMapping
     @Transactional
     public ProjectDto create(@Valid @RequestBody ProjectIn in,
+                             Authentication auth,
                              @AuthenticationPrincipal Jwt jwt) {
 
         var caller = getCaller(jwt);
@@ -86,6 +88,7 @@ public class ProjectController {
     @Transactional
     public ProjectDto update(@PathVariable UUID id,
                              @Valid @RequestBody UpdateProjectDto in,
+                             Authentication auth,
                              @AuthenticationPrincipal Jwt jwt) {
 
         var caller = getCaller(jwt);
@@ -112,17 +115,14 @@ public class ProjectController {
         p.setEndDatePlanned(endPlanned);
         p.setStatus(ProjectStatus.valueOf(in.status()));
 
-        // Trocar gerente APENAS se ADMIN e se veio managerLogin
         if (in.managerLogin() != null && !in.managerLogin().isBlank()) {
             ensureIsAdmin(caller);
 
             var newManager = users.findByLogin(in.managerLogin().trim())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gerente (login) não encontrado"));
 
-            // === Consistência 2: novo gerente precisa ser MANAGER ===
             ensureHasRoleManager(newManager);
 
-            // === Consistência 3: ADMIN não pode se colocar como gerente do próprio projeto ===
             if (newManager.getId().equals(caller.getId())) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Você não pode ser o gerente do próprio projeto.");
@@ -137,7 +137,7 @@ public class ProjectController {
 
     //                    READ
 
-    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLABORADOR')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','MANAGER','COLLAB')")
     @GetMapping("/{id}")
     public ProjectDto get(@PathVariable UUID id) {
         var p = projects.findById(id)
@@ -163,7 +163,7 @@ public class ProjectController {
 
     private void ensureManagerOrAdmin(User u) {
         boolean ok = u.getRoles().stream()
-                .anyMatch(r -> "ROLE_MANAGER".equals(r.getName()) || "ROLE_ADMIN".equals(r.getName()));
+                .anyMatch(r -> "MANAGER".equals(r.getName()) || "ADMIN".equals(r.getName()));
         if (!ok) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Apenas MANAGER/ADMIN podem criar/editar projetos.");
@@ -171,7 +171,7 @@ public class ProjectController {
     }
 
     private void ensureHasRoleManager(User u) {
-        boolean ok = u.getRoles().stream().anyMatch(r -> "ROLE_MANAGER".equals(r.getName()));
+        boolean ok = u.getRoles().stream().anyMatch(r -> "MANAGER".equals(r.getName()));
         if (!ok) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Usuário indicado não possui role MANAGER.");
@@ -179,7 +179,7 @@ public class ProjectController {
     }
 
     private void ensureIsAdmin(User u) {
-        boolean ok = u.getRoles().stream().anyMatch(r -> "ROLE_ADMIN".equals(r.getName()));
+        boolean ok = u.getRoles().stream().anyMatch(r -> "ADMIN".equals(r.getName()));
         if (!ok) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "Apenas ADMIN pode trocar o gerente do projeto.");

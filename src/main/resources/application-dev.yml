@@ -4,12 +4,14 @@ spring:
     username: teamops
     password: teamops
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
   flyway:
     enabled: true
     url: jdbc:postgresql://localhost:5433/teamops_db
@@ -17,6 +19,18 @@ spring:
     password: teamops
     schemas: public
     baseline-on-migrate: true
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /v1/api-docs
+  swagger-ui:
+    enabled: true
+    # escolha UMA das duas linhas abaixo (e acesse exatamente ela):
+    path: /v1/docs
+    # path: /v1/docs.html
+    try-it-out-enabled: true
+    display-request-duration: true
 
 server:
   port: 8080

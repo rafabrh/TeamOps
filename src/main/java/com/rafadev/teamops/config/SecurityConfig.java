@@ -61,9 +61,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/health", "/error",
-                                "/v1/auth/login", "/v1/auth/register", // <- LIBERADO
+                                "/v1/auth/login", "/v1/auth/register",
                                 "/actuator/**",
                                 "/v1/docs",
+                                "v1/swagger-ui/**",
                                 "/swagger-ui/**",
                                 "/v1/api-docs/**", "/v3/api-docs/**"
                         ).permitAll()
