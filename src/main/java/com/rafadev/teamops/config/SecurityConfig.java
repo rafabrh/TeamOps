@@ -46,7 +46,7 @@ public class SecurityConfig {
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         var gac = new JwtGrantedAuthoritiesConverter();
-        gac.setAuthoritiesClaimName("scope");
+        gac.setAuthoritiesClaimName("authorities");
         gac.setAuthorityPrefix("");
         var converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(gac);
@@ -64,12 +64,11 @@ public class SecurityConfig {
                                 "/v1/auth/login", "/v1/auth/register",
                                 "/actuator/**",
                                 "/v1/docs",
-                                "v1/swagger-ui/**",
+                                "/v1/swagger-ui/**",
                                 "/swagger-ui/**",
                                 "/v1/api-docs/**", "/v3/api-docs/**"
                         ).permitAll()
-                        // Somente ADMIN cria roles elevadas
-                        .requestMatchers("/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/v1/admin/**").hasAuthority("ADMIN")
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
@@ -78,7 +77,6 @@ public class SecurityConfig {
 
         return http.build();
     }
-
 
 //    @Bean
 //    JwtDecoder jwtDecoder(@Value("${security.jwt.secret}") String secret) {

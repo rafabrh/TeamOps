@@ -1,4 +1,8 @@
 spring:
+  config:
+    activate:
+      on-profile: dev
+
   datasource:
     url: jdbc:postgresql://localhost:5433/teamops_db
     username: teamops
@@ -10,15 +14,26 @@ spring:
       ddl-auto: validate
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        # sem 'dialect' (o Hibernate infere)
+        jdbc:
+          time_zone: UTC
+        format_sql: true
+        show_sql: true   # útil em dev
 
   flyway:
     enabled: true
-    url: jdbc:postgresql://localhost:5433/teamops_db
-    user: teamops
-    password: teamops
+    # Se for MESMO banco da datasource acima, pode omitir url/user/password
+    # url: jdbc:postgresql://localhost:5433/teamops_db
+    # user: teamops
+    # password: teamops
     schemas: public
     baseline-on-migrate: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
 
 springdoc:
   api-docs:
@@ -26,14 +41,9 @@ springdoc:
     path: /v1/api-docs
   swagger-ui:
     enabled: true
-    # escolha UMA das duas linhas abaixo (e acesse exatamente ela):
     path: /v1/docs
-    # path: /v1/docs.html
     try-it-out-enabled: true
     display-request-duration: true
-
-server:
-  port: 8080
 
 logging:
   level:

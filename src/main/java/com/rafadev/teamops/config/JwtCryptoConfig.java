@@ -30,7 +30,6 @@ public class JwtCryptoConfig {
         } else if (value.startsWith("raw:")) {
             keyBytes = value.substring("raw:".length()).getBytes(StandardCharsets.UTF_8);
         } else {
-            // tenta Base64; se não der, usa UTF-8 cru (igual ao JwtService)
             try {
                 keyBytes = Decoders.BASE64.decode(value);
             } catch (Exception e) {
@@ -55,7 +54,6 @@ public class JwtCryptoConfig {
     @Bean
     public JwtDecoder jwtDecoder() {
         SecretKey key = buildHmacKey(secret);
-        // declara HS256 explicitamente
         return NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     }
 }

@@ -11,6 +11,7 @@ import java.security.Key;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -64,17 +65,30 @@ public class JwtService {
     public String generateAccessToken(String subject, Collection<String> roles, Map<String, Object> extraClaims) {
         Instant now = Instant.now();
 
+        var authorities = roles == null ? List.<String>of()
+                : roles.stream()
+                .map(JwtService::toAuthority) // ver função abaixo
+                .toList();
+
         JwtBuilder b = Jwts.builder()
                 .setSubject(subject)
                 .setIssuer(issuer)
                 .setAudience(audience)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plusSeconds(accessTtlSeconds)))
-                .claim("scope", roles == null ? "" : String.join(" ", roles));
+                .claim("authorities", authorities); // <-- ESSENCIAL
 
         if (extraClaims != null) extraClaims.forEach(b::claim);
 
         return b.signWith(key, SignatureAlgorithm.HS256).compact();
+    }
+
+    private static String toAuthority(String dbRoleName) {
+        if (dbRoleName == null) return "";
+        String r = dbRoleName.startsWith("ROLE_") ? dbRoleName.substring(5) : dbRoleName;
+        if ("COLABORADOR".equalsIgnoreCase(r))
+            return "COLAB";
+        return r;
     }
 
     public String generateRefreshToken(String subject) {
